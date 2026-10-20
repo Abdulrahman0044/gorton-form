@@ -44,8 +44,10 @@ export default function AdminPortal(){
     finally{setBusy(false);}
   }
   const date=(v:string)=>new Date(v).toLocaleString("en-NG",{dateStyle:"medium",timeStyle:"short"});
-  return <div className="admin-screen"><header className="admin-header"><div className="wrap admin-header-row"><a href="/" className="logo"><span>GORTON<small>CONSULTS SYSTEMS LTD</small></span></a><span>Nomination Administration</span></div></header>
-    <main className="wrap admin-main"><div className="admin-intro"><div><h1>Capacity Building Nominations</h1><p>Private administration area for authorized Gorton staff.</p></div>
+  return <div className="admin-screen"><header className="admin-header"><div className="wrap admin-header-row"><a href="/" className="logo" aria-label="Gorton Consults Systems home">
+      <img src="/icons/icon-192.png" width="40" height="40" alt="" aria-hidden="true"/>
+      <span>GORTON<small>CONSULTS SYSTEMS LTD</small></span></a><span>Nomination Administration</span></div></header>
+    <main className="wrap admin-main"><div className="admin-intro"><div><h1>LMS Capacity Building Nominations</h1><p>Private administration area for authorized Gorton staff.</p></div>
       {authenticated&&<button className="btn ghost" onClick={()=>void logOut()}>Sign out</button>}</div>
       {error&&<p className="alert" role="alert">{error}</p>}
       {authenticated===null?<div className="admin-card">Checking your session…</div>:
@@ -62,11 +64,11 @@ export default function AdminPortal(){
           <p>{detail.nomination.focal_person.email} · {detail.nomination.focal_person.wa}</p></section>
           <section><h3>Nominating Officer</h3><p>{detail.nomination.nominating_officer.name} — {detail.nomination.nominating_officer.desig}</p>
           <p>{detail.nomination.nominating_officer.email} · {detail.nomination.nominating_officer.wa}</p></section></div>
-        <h3>Beneficiaries ({detail.beneficiaries.length})</h3><div className="tw"><table><thead><tr><th>#</th><th>Full Name</th><th>Staff Number</th><th>Department</th><th>Designation</th><th>Email</th><th>WhatsApp</th></tr></thead><tbody>
+        <div className="admin-detail-top"><h3>Beneficiaries ({detail.beneficiaries.length})</h3><a className="btn ghost linklike" href={`/api/admin/nominations/${detail.nomination.id}/beneficiaries`}>Download beneficiary list (CSV)</a></div><div className="tw"><table><thead><tr><th>#</th><th>Full Name</th><th>Staff Number</th><th>Department</th><th>Designation</th><th>Email</th><th>WhatsApp</th></tr></thead><tbody>
           {detail.beneficiaries.map(b=><tr key={b.position}><td>{b.position}</td><td>{b.full_name}</td><td>{b.staff_id}</td><td>{b.department}</td><td>{b.designation}</td><td>{b.email}</td><td>{b.whatsapp}</td></tr>)}</tbody></table></div>
         <div className="admin-download"><h3>Signed nomination letter</h3>{detail.letter?
           <a className="btn amb linklike" href={`/api/admin/nominations/${detail.nomination.id}/letter`}>Download {detail.letter.original_filename} ({(detail.letter.file_size/1024).toFixed(0)} KB)</a>:<p>No uploaded letter</p>}</div></div>:
-      <div className="admin-card"><div className="admin-detail-top"><h2>Submitted nominations ({total})</h2><button className="btn ghost" onClick={()=>void load(page)}>Refresh</button></div>
+      <div className="admin-card"><div className="admin-detail-top"><h2>Submitted nominations ({total})</h2><div><a className="btn ghost linklike" href="/api/admin/nominations/export">Download all beneficiaries (CSV)</a> <button className="btn ghost" onClick={()=>void load(page)}>Refresh</button></div></div>
         {list.length===0?<p>No nominations found.</p>:<div className="tw"><table><thead><tr><th>Reference</th><th>Institution</th><th>State</th><th>Beneficiaries</th><th>Submitted</th><th>Action</th></tr></thead><tbody>
         {list.map(n=><tr key={n.id}><td><strong>{n.reference}</strong></td><td>{n.institution_name}</td><td>{n.institution_state}</td><td>{n.beneficiary_count}</td><td>{date(n.submitted_at)}</td><td><button className="text-button" disabled={busy} onClick={()=>void openNomination(n.id)}>View details</button></td></tr>)}
         </tbody></table></div>}

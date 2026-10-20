@@ -14,6 +14,8 @@ The six-step nomination app is built with **Next.js (client + server)**, **Supab
 
 **Pooler selection:** Serverless hosting (e.g. Vercel) normally uses the **Transaction pooler, port 6543**, with `DB_POOL_SIZE=1`. A long-running container on an IPv4-only host can use the **Session pooler, port 5432**. On an IPv6-capable persistent server, direct PostgreSQL is an option. The project uses `pg` with unnamed parameterized statements; no named prepared statements are used (transaction mode does not support them). TLS certificate verification is enabled for remote PostgreSQL.
 
+If your environment does not trust Supabase's database certificate by default, download the CA certificate from **Database → Settings → SSL Configuration** and set `DATABASE_CA_CERT_PATH` to its absolute file path. For example, on Windows: `DATABASE_CA_CERT_PATH=C:\Users\YourName\Downloads\prod-ca-2021.crt`. Keep `rejectUnauthorized` enabled; the application uses this CA to verify the database server. On a deployed host, make the certificate file available there and set the variable to that host's file path.
+
 ## 2. Configure Next.js locally
 
 Node.js 20.9+ and npm are required.
@@ -65,6 +67,8 @@ You may deploy Next.js to Vercel and point `DATABASE_URL` at Supabase's **Transa
 | Admin password and Supabase secrets | Next.js server environment (not browser) |
 
 Upon successful submission, the draft and local letter are removed and a submission reference remains on the device. The admin API verifies the administrator session before fetching a private Storage object. A new random file path is created for each upload; original filenames never appear in the storage key.
+
+Administrators can download beneficiary data as CSV from an individual nomination's detail view or export all submitted beneficiaries from the nominations list. Both exports require an authenticated admin session.
 
 The database transaction writes the institution, 16 beneficiaries, and file metadata together. The private Storage upload precedes the SQL transaction. A failed SQL transaction attempts to delete the newly uploaded file; however, PostgreSQL and object storage do **not** share a distributed transaction. Interrupted requests can leave orphan files, so add periodic orphan-file reconciliation and alerting for production scale.
 

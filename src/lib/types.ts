@@ -4,6 +4,7 @@ export type Institution = { name: string; type: string; state: string; email: st
 export type Draft = {
   clientSubmissionId: string;
   step: number;
+  stepOrderVersion: number;
   inst: Institution;
   focal: Person;
   officer: Person;
@@ -13,7 +14,7 @@ export type Draft = {
 export const emptyPerson = (): Person => ({ name: "", desig: "", email: "", wa: "" });
 export const emptyBeneficiary = (): Beneficiary => ({...emptyPerson(),staffId:"",dept:""});
 export const emptyDraft = (): Draft => ({
-  clientSubmissionId: "", step: 0,
+  clientSubmissionId: "", step: 0, stepOrderVersion: 2,
   inst: { name:"",type:"",state:"",email:"",zone:"" },
   focal:emptyPerson(),officer:emptyPerson(),bene:[emptyBeneficiary()],confirm:false
 });

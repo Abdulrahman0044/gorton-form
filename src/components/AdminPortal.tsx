@@ -11,16 +11,18 @@ export default function AdminPortal(){
   const [error,setError]=useState("");
   const [busy,setBusy]=useState(false);
   const [list,setList]=useState<NominationRow[]>([]);
+  const [listUnavailable,setListUnavailable]=useState(false);
   const [page,setPage]=useState(1);
   const [total,setTotal]=useState(0);
   const [detail,setDetail]=useState<Detail|null>(null);
   const load=useCallback(async(pageNo:number)=>{
     try{
       const response=await fetch(`/api/admin/nominations?page=${pageNo}`,{cache:"no-store"});
-      if(response.status===401){setAuthenticated(false);return;}
+      if(response.status===401){setAuthenticated(false);setListUnavailable(false);return;}
       const json=await response.json();
-      if(!response.ok)throw new Error(json.error||"Unable to load nominations");
-      setList(json.items);setPage(json.page);setTotal(json.total);setAuthenticated(true);setError("");
+      setAuthenticated(true);
+      if(!response.ok){setListUnavailable(true);setError(json.error||"Unable to load nominations");return;}
+      setList(json.items);setPage(json.page);setTotal(json.total);setListUnavailable(false);setError("");
     }catch(e){setError(e instanceof Error?e.message:"Unable to connect to the server");setAuthenticated(false);}
   },[]);
   useEffect(()=>{void load(1);},[load]);
@@ -69,10 +71,11 @@ export default function AdminPortal(){
         <div className="admin-download"><h3>Signed nomination letter</h3>{detail.letter?
           <a className="btn amb linklike" href={`/api/admin/nominations/${detail.nomination.id}/letter`}>Download {detail.letter.original_filename} ({(detail.letter.file_size/1024).toFixed(0)} KB)</a>:<p>No uploaded letter</p>}</div></div>:
       <div className="admin-card"><div className="admin-detail-top"><h2>Submitted nominations ({total})</h2><div><a className="btn ghost linklike" href="/api/admin/nominations/export">Download all beneficiaries (CSV)</a> <button className="btn ghost" onClick={()=>void load(page)}>Refresh</button></div></div>
-        {list.length===0?<p>No nominations found.</p>:<div className="tw"><table><thead><tr><th>Reference</th><th>Institution</th><th>State</th><th>Beneficiaries</th><th>Submitted</th><th>Action</th></tr></thead><tbody>
+        {listUnavailable?<p>Submissions could not be loaded. Check the server logs, then select Refresh to try again.</p>:list.length===0?<p>No nominations found.</p>:<div className="tw"><table><thead><tr><th>Reference</th><th>Institution</th><th>State</th><th>Beneficiaries</th><th>Submitted</th><th>Action</th></tr></thead><tbody>
         {list.map(n=><tr key={n.id}><td><strong>{n.reference}</strong></td><td>{n.institution_name}</td><td>{n.institution_state}</td><td>{n.beneficiary_count}</td><td>{date(n.submitted_at)}</td><td><button className="text-button" disabled={busy} onClick={()=>void openNomination(n.id)}>View details</button></td></tr>)}
         </tbody></table></div>}
-        <div className="pagination"><button className="btn ghost" onClick={()=>void load(page-1)} disabled={page<=1}>Previous</button><span>Page {page} of {Math.max(1,Math.ceil(total/20))}</span>
-          <button className="btn ghost" onClick={()=>void load(page+1)} disabled={page*20>=total}>Next</button></div></div>}
+        {!listUnavailable&&<div className="pagination"><button className="btn ghost" onClick={()=>void load(page-1)} disabled={page<=1}>Previous</button><span>Page {page} of {Math.max(1,Math.ceil(total/20))}</span>
+          <button className="btn ghost" onClick={()=>void load(page+1)} disabled={page*20>=total}>Next</button></div>}
+      </div>}
     </main></div>;
 }

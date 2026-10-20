@@ -16,10 +16,12 @@ function isDraft(value:unknown):value is Draft {
 }
 function normalizeStoredDraft(data:Draft):Draft {
   const base=emptyDraft();
+  const step=Math.max(0,Math.min(5,Number.isFinite(data.step)?data.step:0));
   return {
     ...base,
     clientSubmissionId:typeof data.clientSubmissionId==="string"&&/^[0-9a-f-]{36}$/i.test(data.clientSubmissionId)?data.clientSubmissionId:crypto.randomUUID(),
-    step:Math.max(0,Math.min(5,Number.isFinite(data.step)?data.step:0)),
+    step:data.stepOrderVersion===2?step:step===1?2:step===2?1:step,
+    stepOrderVersion:2,
     inst:{...base.inst,...(data.inst||{})},
     focal:{...base.focal,...(data.focal||{})},
     officer:{...base.officer,...(data.officer||{})},
@@ -35,7 +37,7 @@ function checkStep(d:Draft,step:number,file:File|null):FieldErrors {
     else if(type==="tel"&&!phonePattern.test(v.trim()))e[path]="Enter a valid WhatsApp number.";
   };
   if(step===0){required("inst.name",d.inst.name);required("inst.type",d.inst.type,"radio");required("inst.state",d.inst.state,"select");required("inst.email",d.inst.email,"email");required("inst.zone",d.inst.zone,"radio");}
-  if(step===1||step===2){const key=step===1?"focal":"officer";const p=d[key];for(const [k,,t] of PERSON_FIELDS)required(`${key}.${k}`,p[k],t);}
+  if(step===1||step===2){const key=step===1?"officer":"focal";const p=d[key];for(const [k,,t] of PERSON_FIELDS)required(`${key}.${k}`,p[k],t);}
   if(step===3){
     if(d.bene.length!==MAX_BENEFICIARIES)e.beneCount=`Add ${MAX_BENEFICIARIES-d.bene.length} more beneficiaries to reach ${MAX_BENEFICIARIES}.`;
     const seen=new Set<string>();
@@ -171,7 +173,7 @@ export default function NominationWizard(){
     try{
       // Use the same UUID on retry so a lost response cannot create duplicates.
       const body=new FormData();
-      const {step,...rest}=draft;
+      const {step,stepOrderVersion,...rest}=draft;
       body.append("payload",JSON.stringify(rest));body.append("letter",file);body.append("website","");
       const response=await fetch("/api/nominations",{method:"POST",body,cache:"no-store"});
       const result=await response.json();
@@ -223,8 +225,8 @@ export default function NominationWizard(){
           {errors["inst.state"]&&<span className="err">{errors["inst.state"]}</span>}</div>
         {field("inst.email","Contact Email Address","email",draft.inst.email)}
         {choices("inst.zone","Geo-political Zone",ZONES,draft.inst.zone)}</div></>;
-      case 1:return details("focal");
-      case 2:return details("officer");
+      case 1:return details("officer");
+      case 2:return details("focal");
       case 3:return <><h2>Beneficiary details</h2>
         <p className="lead">Enter the information of all {MAX_BENEFICIARIES} nominated staff. Your progress is saved automatically.</p>
         <div className="counter"><div className="bar"><i style={{width:`${100*draft.bene.length/MAX_BENEFICIARIES}%`}}/></div><b>{draft.bene.length} of {MAX_BENEFICIARIES} beneficiaries</b></div>
@@ -245,8 +247,8 @@ export default function NominationWizard(){
         <p className="note">The letter is stored locally with your draft and sent to the server only when you submit.</p></>;
       default:return <><h2>Review and submission</h2><p className="lead">Check your details before final submission. Select Edit to make corrections.</p>
         {reviewSection("Institution details",0,[["Institution",draft.inst.name],["Type",draft.inst.type],["State",draft.inst.state],["Geo-political zone",draft.inst.zone],["Contact email",draft.inst.email]])}
-        {reviewSection("Focal person (Director of Academic Planning)",1,PERSON_FIELDS.map(([k,l])=>[l,draft.focal[k]]))}
-        {reviewSection("Nominating officer",2,PERSON_FIELDS.map(([k,l])=>[l,draft.officer[k]]))}
+        {reviewSection("Nominating officer",1,PERSON_FIELDS.map(([k,l])=>[l,draft.officer[k]]))}
+        {reviewSection("Focal person (Director of Academic Planning)",2,PERSON_FIELDS.map(([k,l])=>[l,draft.focal[k]]))}
         <section className="rv"><h3>Beneficiaries ({draft.bene.length} of 16)<button type="button" onClick={()=>go(3)}>Edit</button></h3><div className="tw"><table><thead><tr><th>#</th>{BENEFICIARY_FIELDS.map(([,l])=><th key={l}>{l}</th>)}</tr></thead><tbody>
           {draft.bene.map((b,i)=><tr key={i}><td>{i+1}</td>{BENEFICIARY_FIELDS.map(([k])=><td key={k}>{b[k]}</td>)}</tr>)}</tbody></table></div></section>
         {reviewSection("Letter of nomination",4,[["File",file?`${file.name} (${(file.size/1024).toFixed(0)} KB)`:"Not uploaded"]])}

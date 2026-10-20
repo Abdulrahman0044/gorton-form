@@ -1,0 +1,32 @@
+# Optional self-hosted Next.js server + antivirus.
+# Database and private nomination-letter Storage are both managed by Supabase.
+# Copy .env.compose.example to .env and enter your own values.
+services:
+  antivirus:
+    image: clamav/clamav:stable
+    restart: unless-stopped
+    volumes:
+      - gorton_clamdb:/var/lib/clamav
+    # Do not expose the clamd port publicly.
+  web:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      - antivirus
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?Enter Supabase pooled DATABASE_URL}
+      DB_POOL_SIZE: "2"
+      SUPABASE_URL: ${SUPABASE_URL:?Enter Supabase URL}
+      SUPABASE_SECRET_KEY: ${SUPABASE_SECRET_KEY:?Enter Supabase secret key}
+      CLAMAV_HOST: antivirus
+      CLAMAV_PORT: "3310"
+      MALWARE_SCAN_REQUIRED: "true"
+      TRUST_PROXY_IP_HEADER: "true"
+      APP_ORIGIN: ${APP_ORIGIN:?Enter public HTTPS origin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Enter strong admin password}
+      SESSION_SECRET: ${SESSION_SECRET:?Enter 32+ character secret}
+      NODE_ENV: production
+    ports:
+      - "127.0.0.1:3000:3000"
+volumes:
+  gorton_clamdb:

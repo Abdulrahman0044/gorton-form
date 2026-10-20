@@ -1,0 +1,30 @@
+{
+  "name": "gorton-capacity-building-nominations",
+  "private": true,
+  "version": "1.1.0",
+  "scripts": {
+    "dev": "next dev --hostname 0.0.0.0",
+    "build": "next build",
+    "start": "next start --hostname 0.0.0.0",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "15.5.28",
+    "pg": "^8.16.0",
+    "@supabase/supabase-js": "^2.57.0",
+    "server-only": "^0.0.1",
+    "react": "19.1.10",
+    "react-dom": "19.1.10",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.0",
+    "@types/pg": "^8.15.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "typescript": "^5.9.0"
+  },
+  "engines": {
+    "node": ">=20.9.0"
+  }
+}
